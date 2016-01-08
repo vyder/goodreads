@@ -7,6 +7,20 @@ SimpleCov.start do
   add_filter ".bundle"
 end
 
+RSpec.configure do |config|
+  # Explicitly set old 'should' syntax
+  # to surpress deprecation warnings
+  syntax = [:should, :expect]
+
+  config.expect_with :rspec do |expectations|
+    expectations.syntax = syntax
+  end
+
+  config.mock_with :rspec do |mocks|
+    mocks.syntax = syntax
+  end
+end
+
 require 'goodreads'
 require 'webmock'
 require 'webmock/rspec'

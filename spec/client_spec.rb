@@ -30,7 +30,7 @@ describe 'Client' do
     context 'when book does not exist' do
       before do
         stub_request(:get, "http://www.goodreads.com/book/isbn?format=xml&isbn=123456789&key=SECRET_KEY").
-          to_return(:status => 404, :body => "", :headers => {}) 
+          to_return(:status => 404, :body => "", :headers => {})
       end
 
       it 'raises Goodreads::NotFound' do
@@ -85,7 +85,7 @@ describe 'Client' do
 
     context 'with :skip_cropped => true' do
       before { stub_with_key_get('/review/recent_reviews', {}, 'recent_reviews.xml') }
-  
+
       it 'returns only full reviews' do
         reviews = client.recent_reviews(:skip_cropped => true)
         reviews.should be_an Array
@@ -166,7 +166,7 @@ describe 'Client' do
       author.fans_count.should eq 109
       author.image_url.should eq 'http://photo.goodreads.com/authors/1199698411p5/18541.jpg'
       author.small_image_url.should eq 'http://photo.goodreads.com/authors/1199698411p2/18541.jpg'
-      author.about.should eq '' 
+      author.about.should eq ''
       author.influences.should eq ''
       author.works_count.should eq '34'
       author.gender.should eq 'male'
@@ -239,6 +239,50 @@ describe 'Client' do
     end
   end
 
+  describe '#shelves' do
+    it "returns list of shelves for a specified user" do
+      stub_with_key_get('/shelf/list.xml', {}, 'shelves.xml')
+
+      response = client.shelves('2003928')
+
+      response.should respond_to :start
+      response.should respond_to :end
+      response.should respond_to :total
+      response.should respond_to :shelves
+
+      response.start.should eq 1
+      response.end.should eq 3
+      response.total.should eq 6
+      response.shelves.length.should eq 3
+      response.shelves.first.id.should eq 22473
+      response.shelves.first.name.strip.should eq 'currently-reading'
+    end
+
+    it "paginates a user's shelves" do
+      stub_with_key_get('/shelf/list.xml', { page: 2 }, 'shelves-p2.xml')
+
+      response = client.shelves('2003928', page: 2)
+
+      response.start.should eq 4
+      response.end.should eq 6
+      response.total.should eq 6
+      response.shelves.length.should eq 3
+      response.shelves.first.id.should eq 8626198
+      response.shelves.first.name.should eq 'read'
+    end
+
+    it "returns an empty array when user has no shelves" do
+      stub_with_key_get('/shelf/list.xml', {}, 'empty_shelves.xml')
+
+      response = client.shelves('2003928')
+
+      response.start.should eq 0
+      response.end.should eq 0
+      response.total.should eq 0
+      response.shelves.length.should eq 0
+    end
+  end
+
   describe '#shelf' do
     it "returns list of books for a user's specified shelf" do
       stub_with_key_get('/review/list/1.xml', {:shelf => 'to-read', :v => '2'}, 'to-read.xml')
@@ -303,7 +347,7 @@ describe 'Client' do
 
     it "returns group details" do
       group = client.group('1')
-    
+
       group.should be_a Hashie::Mash
       group.id.should eq '1'
       group.title.should eq 'Goodreads Feedback'
